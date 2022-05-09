@@ -6,7 +6,7 @@
 #include "hardware.h"
 
 #define MOTOR_NUM 3
-const uint8_t MOTOR_ADDRS[MOTOR_NUM] = {72, 73, 74}; // Modify this!!!
+const uint8_t MOTOR_ADDRS[MOTOR_NUM] = {72, 73, 74}; // Modify this!!! Head to tail
 
 float phi = 1;   
 float freq = 1;
