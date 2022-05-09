@@ -5,7 +5,7 @@
 #include "registers.h"
 #include "hardware.h"
 
-const uint8_t MOTOR_ADDR = 21;
+const uint8_t MOTOR_ADDR = 23;
 float freq = 2.0;   // Hz
 float amp = 40;
 

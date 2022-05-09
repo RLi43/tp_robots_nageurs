@@ -11,11 +11,11 @@
 using namespace std;
 
 // Tracking
-const char* TRACKING_PC_NAME = "biorobpc11";   ///< host name of the tracking PC
+const char* TRACKING_PC_NAME = "biorobpc6";   ///< host name of the tracking PC
 const uint16_t TRACKING_PORT = 10502;          ///< port number of the tracking PC
 
 // Radio
-const uint8_t RADIO_CHANNEL = 201;         ///< robot radio channel
+const uint8_t RADIO_CHANNEL = 126;         ///< robot radio channel
 const char* INTERFACE = "COM1";            ///< robot radio interface
 
 int main()

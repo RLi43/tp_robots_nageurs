@@ -11,7 +11,7 @@
 #define REG8_PHI 4
 using namespace std;
 
-const uint8_t RADIO_CHANNEL = 201;         ///< robot radio channel
+const uint8_t RADIO_CHANNEL = 126;         ///< robot radio channel
 const char* INTERFACE = "COM1";            ///< robot radio interface
 
 int main()
@@ -52,7 +52,7 @@ int main()
     
     // Escape by key
     DWORD a = ext_key();
-    if(a == VK_ESCAPE || a == 0x51/*Q*/) break;
+    break;
     // // Escape by time
     // time_t starter, timer;
     // time(&starter);

@@ -66,7 +66,7 @@ int main()
   }
   // Read required distance
   float distance = -1.f;
-  while(distance<0 || distance>5){
+  while(distance<0 || distance>500){
     cout << "Required distance to move(0-5m):";
     cin >> distance;
   }
@@ -82,11 +82,13 @@ int main()
   uint8_t freq = ENCODE_PARAM_8(f_freq, 0, 1.5);
   uint8_t phi = ENCODE_PARAM_8(f_phi, -1.5, 1.5);
   uint8_t turn = ENCODE_PARAM_8(f_turn, -30, 30);
+  uint8_t turn_zeros = ENCODE_PARAM_8(0, -30, 30);
   // send the command
   regs.set_reg_b(REG8_AMP, amp);
   regs.set_reg_b(REG8_FREQ, freq);
   regs.set_reg_b(REG8_PHI, phi);
-  regs.set_reg_b(REG8_TURN, turn);
+  //regs.set_reg_b(REG8_TURN, turn);
+  regs.set_reg_b(REG8_MODE, 2); 
   
   bool done = false;
   bool initialized = false;
@@ -94,7 +96,8 @@ int main()
   double cur_distance = 0.f;
   double last_x=0, last_y=0;
 
-  clock_t start, now;
+  clock_t start, now, turn_start = 0;
+  bool turned = false;
   start = clock();
   while (!kbhit() && !done) {
     uint32_t frame_time;
@@ -125,6 +128,21 @@ int main()
         last_y = start_y = y;
         initialized = true;
       }
+      if(x < 1.0 || x > 4.0 ){
+        if(!turned){            
+          regs.set_reg_b(REG8_TURN, turn);
+          turn_start = now;
+          turned = true;
+        }
+      }
+      else {
+        regs.set_reg_b(REG8_TURN, turn_zeros);
+        turned = false;
+      }
+      
+      if((float)(now - turn_start )/ CLOCKS_PER_SEC > 4){
+        regs.set_reg_b(REG8_TURN, turn_zeros);
+      }
     } else {
       cout << "(not detected)" << '\r';
     }
@@ -150,7 +168,7 @@ int main()
     regs.set_reg_dw(REG32_LED, rgb);
 
     // Make the robot move
-    regs.set_reg_b(REG8_MODE, 2); //IMODE_SINE_DEMO     2
+    //regs.set_reg_b(REG8_MODE, 2); //IMODE_SINE_DEMO     2
     // Waits 10 ms before getting the info next time (anyway the tracking runs at 15 fps)
     Sleep(10);
   }

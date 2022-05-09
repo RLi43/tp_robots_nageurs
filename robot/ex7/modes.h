@@ -4,6 +4,7 @@
 #define REG8_AMP 2
 #define REG8_FREQ 3
 #define REG8_PHI 4
+#define REG8_TURN 5
 
 /// Idle mode: do nothing
 #define IMODE_IDLE          0

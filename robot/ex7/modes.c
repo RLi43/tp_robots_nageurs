@@ -5,12 +5,13 @@
 #include "registers.h"
 #include "hardware.h"
 
-#define MOTOR_NUM 3
-const uint8_t MOTOR_ADDRS[MOTOR_NUM] = {72, 73, 74}; // Modify this!!! Head to tail
+#define MOTOR_NUM 5
+const uint8_t MOTOR_ADDRS[MOTOR_NUM] = {25, 22, 24, 26, 23}; // Modify this!!! Head to tail
 
 float phi = 1;   
 float freq = 1;
 float amp = 40;
+int turn = 0;
 
 // listen to the parameters command
 static int8_t register_handler(uint8_t operation, uint8_t address, RadioData* radio_data)
@@ -18,8 +19,10 @@ static int8_t register_handler(uint8_t operation, uint8_t address, RadioData* ra
   switch (operation)
   {    
     case ROP_WRITE_8:
-      if (address == REG8_MODE)
-      else if (address == REG8_AMP) {
+     /* if (address == REG8_MODE){
+        reg8_table[REG8_MODE] = radio_data->byte;
+      }
+      else*/ if (address == REG8_AMP) {
         amp = DECODE_PARAM_8(radio_data->byte, 0, 80);
         return TRUE;
       }
@@ -30,6 +33,10 @@ static int8_t register_handler(uint8_t operation, uint8_t address, RadioData* ra
       else if (address == REG8_PHI)
       {
         phi = DECODE_PARAM_8(radio_data->byte, -1.5, 1.5);    
+      }
+      else if (address == REG8_TURN)
+      {
+        turn = DECODE_PARAM_8(radio_data->byte, -30, 30);    
       }
       break;
   }
@@ -59,7 +66,7 @@ void sine_demo_mode()
 
     for(int i = 0; i<MOTOR_NUM; i++){
       // Calculates the sine wave
-      l = amp * sin(M_TWOPI * (freq * my_time + (float)i *phi /MOTOR_NUM ));
+      l = amp * sin(M_TWOPI * (freq * my_time + (MOTOR_NUM - (float)i) *phi /MOTOR_NUM )) + turn ;
       l_rounded = (int8_t) l;
 
       bus_set(MOTOR_ADDRS[i], MREG_SETPOINT, DEG_TO_OUTPUT_BODY(l_rounded));
