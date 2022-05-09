@@ -4,6 +4,7 @@
 #include "regdefs.h"
 #include "utils.h"
 #include <math.h>
+#include <time.h>
 
 #define REG8_AMP 2
 #define REG8_FREQ 3
@@ -52,6 +53,14 @@ int main()
     // Escape by key
     DWORD a = ext_key();
     if(a == VK_ESCAPE || a == 0x51/*Q*/) break;
+    // // Escape by time
+    // time_t starter, timer;
+    // time(&starter);
+    // while(1){
+    //   time(&timer);
+    //   if(difftime(timer, starter) > 15)break;
+    // }
+    // break;
   }
   
   //ext_key(); // wait to quit
