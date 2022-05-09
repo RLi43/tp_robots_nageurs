@@ -54,6 +54,7 @@ int main()
       cout << "(not detected)" << '\r';
     }
 
+    // change the color
     uint8_t r = ENCODE_PARAM_8(x, 0, 6);
     uint8_t g = 64;
     uint8_t b = ENCODE_PARAM_8(y, 0, 2);

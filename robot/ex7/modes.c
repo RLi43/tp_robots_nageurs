@@ -19,10 +19,7 @@ static int8_t register_handler(uint8_t operation, uint8_t address, RadioData* ra
   switch (operation)
   {    
     case ROP_WRITE_8:
-     /* if (address == REG8_MODE){
-        reg8_table[REG8_MODE] = radio_data->byte;
-      }
-      else*/ if (address == REG8_AMP) {
+      if (address == REG8_AMP) {
         amp = DECODE_PARAM_8(radio_data->byte, 0, 80);
         return TRUE;
       }

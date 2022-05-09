@@ -53,14 +53,6 @@ int main()
     // Escape by key
     DWORD a = ext_key();
     break;
-    // // Escape by time
-    // time_t starter, timer;
-    // time(&starter);
-    // while(1){
-    //   time(&timer);
-    //   if(difftime(timer, starter) > 15)break;
-    // }
-    // break;
   }
   
   //ext_key(); // wait to quit

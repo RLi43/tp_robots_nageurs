@@ -39,7 +39,6 @@ int main()
   reboot_head(regs);
 
   CTrackingClient trk;
-
   // Connects to the tracking server
   if (!trk.connect(TRACKING_PC_NAME, TRACKING_PORT)) {
     return 1;
@@ -70,7 +69,6 @@ int main()
     cout << "Required distance to move(0-5m):";
     cin >> distance;
   }
-
   int trial = 0;
   cout << "Trial:";
   cin >> trial;
@@ -80,18 +78,20 @@ int main()
   // turn floats to bytes
   uint8_t amp = ENCODE_PARAM_8(f_amp, 0, 80);
   uint8_t freq = ENCODE_PARAM_8(f_freq, 0, 1.5);
-  uint8_t phi = ENCODE_PARAM_8(f_phi, -1.5, 1.5);
-  uint8_t turn = ENCODE_PARAM_8(f_turn, -30, 30);
+  uint8_t phi = ENCODE_PARAM_8(f_phi, -1.5, 1.5); // send a negtive value to make it move backwards
+  uint8_t turn = ENCODE_PARAM_8(f_turn, -30, 30); // for turning angle, positive - turn left
   // send the command
   regs.set_reg_b(REG8_AMP, amp);
   regs.set_reg_b(REG8_FREQ, freq);
   regs.set_reg_b(REG8_PHI, phi);
   regs.set_reg_b(REG8_TURN, turn);
+  // Make the robot move
+  regs.set_reg_b(REG8_MODE, 2); //IMODE_SINE_DEMO     2
   
   bool done = false;
   bool initialized = false;
-  double start_x = 0.f, start_y = 0.f;
-  double cur_distance = 0.f;
+  double start_x = 0.f, start_y = 0.f; // initial position of the robot
+  double cur_distance = 0.f; // the distance the robot has travelled
   double last_x=0, last_y=0;
 
   clock_t start, now;
@@ -102,14 +102,12 @@ int main()
     if (!trk.update(frame_time)) {
       return 1;
     }
-    
-    double x, y;
-    
-    cout.precision(2);
-    
     // Gets the ID of the first spot (the tracking system supports multiple ones)
     int id = trk.get_first_id();
+
+    double x, y; // current position
     
+    cout.precision(2);
     // Reads its coordinates (if (id == -1), then no spot is detected)
     if (id != -1 && trk.get_pos(id, x, y)) {
       cout << "(" << fixed << x << ", " << y << ", " << cur_distance<<")" << " m      \r";
@@ -129,7 +127,7 @@ int main()
       cout << "(not detected)" << '\r';
     }
 
-    
+    // accumulate the distance
     cur_distance += sqrt(pow(x - last_x, 2) + pow(y - last_y, 2));
     if(cur_distance >= distance) {
       done = true;
@@ -137,27 +135,21 @@ int main()
     }
     last_x = x;
     last_y = y;
-    // Stop the robot if reached required distance
-    // if (sqrt(pow(x - start_x, 2) + pow(y - start_y, 2)) > distance) {
-    //   done = true;
-    //   break;
-    // }
 
+    // change the led color indicating the position in x,y
     uint8_t r = ENCODE_PARAM_8(x, 0, 6);
     uint8_t g = 64;
     uint8_t b = ENCODE_PARAM_8(y, 0, 2);
     uint32_t rgb = ((uint32_t) r << 16) | ((uint32_t) g << 8) | b;
     regs.set_reg_dw(REG32_LED, rgb);
 
-    // Make the robot move
-    regs.set_reg_b(REG8_MODE, 2); //IMODE_SINE_DEMO     2
     // Waits 10 ms before getting the info next time (anyway the tracking runs at 15 fps)
     Sleep(10);
   }
-  regs.set_reg_b(REG8_MODE, 0); // IDLE
   // Clears the console input buffer (as kbhit() doesn't)
   FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 
+  regs.set_reg_b(REG8_MODE, 0); // IDLE
   regs.close();
   return 0;
 }

@@ -25,6 +25,7 @@ const char* INTERFACE = "COM1";            ///< robot radio interface
 const char* TRACKING_PC_NAME = "biorobpc6";   ///< host name of the tracking PC
 const uint16_t TRACKING_PORT = 10502;          ///< port number of the tracking PC
 
+#define TURN_AROUND
 
 int main()
 {
@@ -39,7 +40,6 @@ int main()
   reboot_head(regs);
 
   CTrackingClient trk;
-
   // Connects to the tracking server
   if (!trk.connect(TRACKING_PC_NAME, TRACKING_PORT)) {
     return 1;
@@ -87,7 +87,10 @@ int main()
   regs.set_reg_b(REG8_AMP, amp);
   regs.set_reg_b(REG8_FREQ, freq);
   regs.set_reg_b(REG8_PHI, phi);
-  //regs.set_reg_b(REG8_TURN, turn);
+  #ifndef TURN_AROUND
+  regs.set_reg_b(REG8_TURN, turn);
+  #endif
+  // Make the robot move
   regs.set_reg_b(REG8_MODE, 2); 
   
   bool done = false;
@@ -96,23 +99,24 @@ int main()
   double cur_distance = 0.f;
   double last_x=0, last_y=0;
 
-  clock_t start, now, turn_start = 0;
+  clock_t start, now;
+  #ifdef TURN_AROUND
+  clock_t turn_start = 0;
   bool turned = false;
+  #endif
   start = clock();
   while (!kbhit() && !done) {
     uint32_t frame_time;
     // Gets the current position
     if (!trk.update(frame_time)) {
       return 1;
-    }
-    
-    double x, y;
-    
-    cout.precision(2);
-    
+    }    
     // Gets the ID of the first spot (the tracking system supports multiple ones)
     int id = trk.get_first_id();
+
+    double x, y; // current position 
     
+    cout.precision(2);
     // Reads its coordinates (if (id == -1), then no spot is detected)
     if (id != -1 && trk.get_pos(id, x, y)) {
       cout << "(" << fixed << x << ", " << y << ", " << cur_distance<<")" << " m      \r";
@@ -128,8 +132,12 @@ int main()
         last_y = start_y = y;
         initialized = true;
       }
+
+      #ifdef TURN_AROUND
+      // if it's approaching the boundary
       if(x < 1.0 || x > 4.0 ){
         if(!turned){            
+          // turn left for max. 4s
           regs.set_reg_b(REG8_TURN, turn);
           turn_start = now;
           turned = true;
@@ -139,15 +147,15 @@ int main()
         regs.set_reg_b(REG8_TURN, turn_zeros);
         turned = false;
       }
-      
       if((float)(now - turn_start )/ CLOCKS_PER_SEC > 4){
         regs.set_reg_b(REG8_TURN, turn_zeros);
       }
+      #endif
     } else {
       cout << "(not detected)" << '\r';
     }
-
     
+    // accumulate the distance
     cur_distance += sqrt(pow(x - last_x, 2) + pow(y - last_y, 2));
     if(cur_distance >= distance) {
       done = true;
@@ -155,11 +163,6 @@ int main()
     }
     last_x = x;
     last_y = y;
-    // Stop the robot if reached required distance
-    // if (sqrt(pow(x - start_x, 2) + pow(y - start_y, 2)) > distance) {
-    //   done = true;
-    //   break;
-    // }
 
     uint8_t r = ENCODE_PARAM_8(x, 0, 6);
     uint8_t g = 64;
@@ -167,15 +170,13 @@ int main()
     uint32_t rgb = ((uint32_t) r << 16) | ((uint32_t) g << 8) | b;
     regs.set_reg_dw(REG32_LED, rgb);
 
-    // Make the robot move
-    //regs.set_reg_b(REG8_MODE, 2); //IMODE_SINE_DEMO     2
     // Waits 10 ms before getting the info next time (anyway the tracking runs at 15 fps)
     Sleep(10);
   }
-  regs.set_reg_b(REG8_MODE, 0); // IDLE
   // Clears the console input buffer (as kbhit() doesn't)
   FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 
+  regs.set_reg_b(REG8_MODE, 0); // IDLE
   regs.close();
   return 0;
 }
