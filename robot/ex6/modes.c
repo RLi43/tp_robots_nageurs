@@ -6,7 +6,7 @@
 #include "hardware.h"
 
 const uint8_t MOTOR_ADDR = 21;
-float freq = 1.0;   // Hz
+float freq = 2.0;   // Hz
 float amp = 40;
 
 // listen to the parameters command

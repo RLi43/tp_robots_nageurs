@@ -5,8 +5,11 @@
 #include "registers.h"
 #include "hardware.h"
 
-const uint8_t MOTOR_ADDR = 21;
-float freq = 1.0;   // Hz
+#define MOTOR_NUM 3
+const uint8_t MOTOR_ADDRS[MOTOR_NUM] = {72, 73, 74}; // Modify this!!!
+
+float phi = 1;   
+float freq = 1;
 float amp = 40;
 
 // listen to the parameters command
@@ -15,13 +18,18 @@ static int8_t register_handler(uint8_t operation, uint8_t address, RadioData* ra
   switch (operation)
   {    
     case ROP_WRITE_8:
-      if (address == REG8_AMP) {
-        amp = DECODE_PARAM_8(radio_data->byte, 0, 60);
+      if (address == REG8_MODE)
+      else if (address == REG8_AMP) {
+        amp = DECODE_PARAM_8(radio_data->byte, 0, 80);
         return TRUE;
       }
       else if (address == REG8_FREQ)
       {
-        freq = DECODE_PARAM_8(radio_data->byte, 0, 2);        
+        freq = DECODE_PARAM_8(radio_data->byte, 0, 1.5);        
+      }
+      else if (address == REG8_PHI)
+      {
+        phi = DECODE_PARAM_8(radio_data->byte, -1.5, 1.5);    
       }
       break;
   }
@@ -37,8 +45,10 @@ void sine_demo_mode()
   cycletimer = getSysTICs();
   my_time = 0;
 
-  init_body_module(MOTOR_ADDR);
-  start_pid(MOTOR_ADDR);
+  for(int i = 0; i<MOTOR_NUM; i++){
+    init_body_module(MOTOR_ADDRS[i]);
+    start_pid(MOTOR_ADDRS[i]);
+  }
 
   do {
     // Calculates the delta_t in seconds and adds it to the current time
@@ -47,10 +57,13 @@ void sine_demo_mode()
     delta_t = (float) dt / sysTICSperSEC;
     my_time += delta_t;
 
-    // Calculates the sine wave
-    l = amp * sin(M_TWOPI * freq * my_time);
-    l_rounded = (int8_t) l;
+    for(int i = 0; i<MOTOR_NUM; i++){
+      // Calculates the sine wave
+      l = amp * sin(M_TWOPI * (freq * my_time + (float)i *phi /MOTOR_NUM ));
+      l_rounded = (int8_t) l;
 
+      bus_set(MOTOR_ADDRS[i], MREG_SETPOINT, DEG_TO_OUTPUT_BODY(l_rounded));
+    }
     // Outputs the sine wave to the LED
     if (l >= 0) {
       set_rgb(0, l, 32);
@@ -58,16 +71,17 @@ void sine_demo_mode()
       set_rgb(-l, 0, 32);
     }
     
-    bus_set(MOTOR_ADDR, MREG_SETPOINT, DEG_TO_OUTPUT_BODY(l_rounded));
 
     // Make sure there is some delay, so that the timer output is not zero
     pause(ONE_MS);
 
   } while (reg8_table[REG8_MODE] == IMODE_SINE_DEMO);
 
-  bus_set(MOTOR_ADDR, MREG_SETPOINT, DEG_TO_OUTPUT_BODY(0.0));
-  pause(ONE_SEC);
-  bus_set(MOTOR_ADDR, MREG_MODE, MODE_IDLE);
+  for(int i = 0; i<MOTOR_NUM; i++){
+    bus_set(MOTOR_ADDRS[i], MREG_SETPOINT, DEG_TO_OUTPUT_BODY(0.0));
+    pause(ONE_SEC);
+    bus_set(MOTOR_ADDRS[i], MREG_MODE, MODE_IDLE);
+  }
   // Back to the "normal" green
   set_color(2);
 }

@@ -10,6 +10,9 @@ int main(void)
   reg32_table[REG32_LED] = LED_MANUAL;  // manual LED control
 
   while (1) {
+
+    /*
+    // change colors
     for (i = 0; i < 127; i++) {
       set_rgb(i, 0, 0);
       pause(TEN_MS);
@@ -33,7 +36,13 @@ int main(void)
     for (i = 127; i >= 0; i--) {
       set_rgb(0, 0, i);
       pause(TEN_MS);
-    }
+    }*/
+
+    // Blink in green with 1 Hz
+    set_rgb(0,127,0);
+    pause(ONE_SEC/2);
+    set_rgb(0,0,0);
+    pause(ONE_SEC/2);
   }
   return 0;
 }

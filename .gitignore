@@ -1,0 +1,9 @@
+desktop.ini
+*.o
+*.exe
+*.elf
+*.hex
+*.lst
+*.map
+.dep
+.vscode
